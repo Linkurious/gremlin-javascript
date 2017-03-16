@@ -26,7 +26,9 @@ function GremlinClient(port, host, options) {
     op: 'eval',
     processor: '',
     accept: 'application/json',
-    executeHandler: executeHandler
+    executeHandler: executeHandler,
+    ssl: false,
+    rejectUnauthorized: false
   });
 
   this.useSession = this.options.session;
@@ -40,8 +42,15 @@ function GremlinClient(port, host, options) {
 
   this.commands = {};
 
+  this.protocol = this.options.ssl ? 'wss://' : 'ws://';
+
   // Open websocket connection
-  this.ws = new WebSocket('ws://'+ this.host +':'+ this.port);
+  this.ws = new WebSocket(this.protocol + this.host +':'+ this.port,
+      undefined,
+      {
+        rejectUnauthorized: this.options.rejectUnauthorized
+      }
+  );
 
   this.ws.onopen = this.onConnectionOpen.bind(this);
 
