@@ -41,6 +41,7 @@ function GremlinClient(port, host, options) {
   this.queue = [];
 
   this.commands = {};
+  this.lastAuthenticationReqId = null;
 
   this.protocol = this.options.ssl ? 'wss://' : 'ws://';
 
@@ -73,13 +74,19 @@ inherits(GremlinClient, EventEmitter);
  */
 GremlinClient.prototype.handleMessage = function(event) {
   var rawMessage = JSON.parse(event.data || event); // Node.js || Browser API
-  var command = this.commands[rawMessage.requestId];
+  if (this.lastAuthenticationReqId !== null) {
+    var requestId = this.lastAuthenticationReqId;
+    this.lastAuthenticationReqId = null;
+  } else {
+    var requestId = rawMessage.requestId;
+  }
+  var command = this.commands[requestId];
   var statusCode = rawMessage.status.code;
   var messageStream = command.messageStream;
 
   switch (statusCode) {
     case 200: // SUCCESS
-      delete this.commands[rawMessage.requestId]; // TODO: optimize performance
+      delete this.commands[requestId];
       messageStream.push(rawMessage);
       messageStream.push(null);
       break;
@@ -87,9 +94,11 @@ GremlinClient.prototype.handleMessage = function(event) {
       messageStream.push(null);
       break;
     case 206: // PARTIAL_CONTENT
+      delete this.commands[requestId];
       messageStream.push(rawMessage);
       break;
     default:
+      delete this.commands[requestId];
       messageStream.emit('error', new Error(rawMessage.status.message + ' (Error '+ statusCode +')'));
       break;
   }
@@ -308,6 +317,10 @@ GremlinClient.prototype.messageStream = function(script, bindings, message) {
  */
 GremlinClient.prototype.sendCommand = function(command) {
   this.commands[command.message.requestId] = command;
+
+  if (command.message.op === 'authentication') {
+    this.lastAuthenticationReqId = command.message.requestId;
+  }
 
   if (this.connected) {
     this.sendMessage(command.message);
