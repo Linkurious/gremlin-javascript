@@ -91,10 +91,10 @@ GremlinClient.prototype.handleMessage = function(event) {
       messageStream.push(null);
       break;
     case 204: // NO_CONTENT
+      delete this.commands[requestId];
       messageStream.push(null);
       break;
     case 206: // PARTIAL_CONTENT
-      delete this.commands[requestId];
       messageStream.push(rawMessage);
       break;
     default:
