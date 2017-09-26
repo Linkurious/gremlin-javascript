@@ -21,6 +21,7 @@ function GremlinClient(port, host, options) {
   this.host = host || 'localhost';
 
   this.options = _.defaults(options || {}, {
+    path: '',
     language: 'gremlin-groovy',
     session: false,
     op: 'eval',
@@ -30,6 +31,8 @@ function GremlinClient(port, host, options) {
     ssl: false,
     rejectUnauthorized: false
   });
+  
+  this.path = this.options.path;
 
   this.useSession = this.options.session;
 
@@ -46,7 +49,7 @@ function GremlinClient(port, host, options) {
   this.protocol = this.options.ssl ? 'wss://' : 'ws://';
 
   // Open websocket connection
-  this.ws = new WebSocket(this.protocol + this.host +':'+ this.port,
+  this.ws = new WebSocket(this.protocol + this.host +':'+ this.port + this.path,
       undefined,
       {
         rejectUnauthorized: this.options.rejectUnauthorized
