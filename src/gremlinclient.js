@@ -84,6 +84,12 @@ GremlinClient.prototype.handleMessage = function(event) {
     var requestId = rawMessage.requestId;
   }
   var command = this.commands[requestId];
+
+  if (command === undefined || command === null) {
+    // If there was no command for this response, just ignore the response
+    return;
+  }
+
   var statusCode = rawMessage.status.code;
   var messageStream = command.messageStream;
 
