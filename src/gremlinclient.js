@@ -181,6 +181,7 @@ GremlinClient.prototype.buildCommand = function(script, bindings, message) {
     bindings: bindings,
     accept: this.options.accept,
     language: this.options.language,
+    binary: false
   });
 
   message = _.defaults(message || {}, {
@@ -204,8 +205,28 @@ GremlinClient.prototype.buildCommand = function(script, bindings, message) {
   return command;
 };
 
+GremlinClient.prototype.packMessageToBinary = function(message) {
+  var serializedMessage = message.args.accept + JSON.stringify(message);
+  serializedMessage = unescape(encodeURIComponent(serializedMessage));
+
+  // Let's start packing the message into binary
+  // mimeLength(1) + mimeType Length + serializedMessage Length
+  var binaryMessage = new Uint8Array(1 + serializedMessage.length);
+  binaryMessage[0] = this.options.accept.length;
+
+  for (let i = 0; i < serializedMessage.length; i++) {
+    binaryMessage[i + 1] = serializedMessage.charCodeAt(i);
+  }
+
+  return binaryMessage;
+}
+
 GremlinClient.prototype.sendMessage = function(message) {
-  this.ws.send(JSON.stringify(message));
+  var formatedMessage = message.args.binary
+    ? this.packMessageToBinary(message)
+    : JSON.stringify(message);
+
+  this.ws.send(formatedMessage);
 };
 
 /**
