@@ -212,13 +212,14 @@ GremlinClient.prototype.buildCommand = function(script, bindings, message) {
 };
 
 GremlinClient.prototype.packMessageToBinary = function(message) {
-  var serializedMessage = message.args.accept + JSON.stringify(message);
+  var mimeType = message.args.accept;
+  var serializedMessage = mimeType + JSON.stringify(message);
   serializedMessage = unescape(encodeURIComponent(serializedMessage));
 
   // Let's start packing the message into binary
   // mimeLength(1) + mimeType Length + serializedMessage Length
   var binaryMessage = new Uint8Array(1 + serializedMessage.length);
-  binaryMessage[0] = this.options.accept.length;
+  binaryMessage[0] = mimeType.length;
 
   for (let i = 0; i < serializedMessage.length; i++) {
     binaryMessage[i + 1] = serializedMessage.charCodeAt(i);
