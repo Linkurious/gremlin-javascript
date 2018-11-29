@@ -17,9 +17,9 @@ function defaultExecuteHandler(messageStream, callback) {
       callback(err);
     })
     .map(function(message) {
-      objectMode = !_.isArray(message.result.data);
+      objectMode = !_.isArray(message.result.data['@value'] || message.result.data);
 
-      return message.result.data;
+      return message.result.data['@value'] || message.result.data;
     })
     .sequence()
     .toArray(function(results) {
